@@ -45,11 +45,14 @@ nav form button{
   margin-right: 20px;
   cursor: pointer;
   background-color: #fcfcfc;
+  position: relative;
 }
 #list ul li:active{
   transform: scale(1.01);
 }
-
+#list ul li .close{
+  transform: scale(0.8);
+}
 #list ul li > div{
   vertical-align: middle;
 }
@@ -96,7 +99,7 @@ nav form button{
   max-width: 100%;
 }
 
-#poupup .close{
+.close{
   padding: 1px 7px 4px 7px;
   position: absolute;
   right: 0px;

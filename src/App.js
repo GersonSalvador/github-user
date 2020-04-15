@@ -30,8 +30,8 @@ function Nav(props){
 }
 
 function List(props){
-  function handleClick(item){
-    props.poupup(item)
+  function handleClick(id){
+    props.poupup(id)
   }
   return (
     <div id="list">
@@ -39,7 +39,8 @@ function List(props){
         {
           props.profile.map((item,i) => {
             return(
-              <li key={i} onClick={()=>{handleClick(item)}}>
+              <li key={i} onClick={()=>{handleClick(item.id)}}>
+                <div className="close" onClick={() => props.remove(item.id)}>X</div>
                 <div className="avatar">
                   <img src={item.avatar_url} alt={item.login}/>
                 </div>
@@ -58,7 +59,6 @@ function List(props){
 }
 
 function Poupup(props){
-  console.log('props',props)
 
   const getDate = (date) => {
     const d = new Date(date)
@@ -81,6 +81,7 @@ function Poupup(props){
         <p><strong>Following:</strong> {props.info.following}</p>
         <p><strong>Public Repos:</strong> {props.info.public_repos}</p>
         <p><strong>Public Gists:</strong> {props.info.public_gists}</p>
+        <p><strong>Bio:</strong></p>
         <div className="bio">{props.info.bio}</div>
       </div>
     </div>
@@ -90,60 +91,58 @@ function Poupup(props){
 
 function App() {
 
-  const [list,setList] = useState([{
-    login: "GersonSalvador",
-    id: 13970277,
-    node_id: "MDQ6VXNlcjEzOTcwMjc3",
-    avatar_url: "https://avatars0.githubusercontent.com/u/13970277?v=4",
-    gravatar_id: "",
-    url: "https://api.github.com/users/GersonSalvador",
-    html_url: "https://github.com/GersonSalvador",
-    followers_url: "https://api.github.com/users/GersonSalvador/followers",
-    following_url: "https://api.github.com/users/GersonSalvador/following{/other_user}",
-    gists_url: "https://api.github.com/users/GersonSalvador/gists{/gist_id}",
-    starred_url: "https://api.github.com/users/GersonSalvador/starred{/owner}{/repo}",
-    subscriptions_url: "https://api.github.com/users/GersonSalvador/subscriptions",
-    organizations_url: "https://api.github.com/users/GersonSalvador/orgs",
-    repos_url: "https://api.github.com/users/GersonSalvador/repos",
-    events_url: "https://api.github.com/users/GersonSalvador/events{/privacy}",
-    received_events_url: "https://api.github.com/users/GersonSalvador/received_events",
-    type: "User",
-    site_admin: false,
-    name: "Gerson Salvador",
-    company: "EasySystem",
-    blog: "",
-    location: "Brazil, SC",
-    email: null,
-    hireable: null,
-    bio: null,
-    public_repos: 14,
-    public_gists: 1,
-    followers: 2,
-    following: 5,
-    created_at: "2015-08-25T20:43:54Z",
-    updated_at: "2020-03-27T01:49:53Z",
-  }])
+  const [list,setList] = useState([])
+  const [init, setInit] = useState([])
+
+  async function initialState(){
+    try{
+      const users = await axios.get('https://api.github.com/users/gersonsalvador')
+      setInit([users.data])
+      setList([users.data])
+    } catch(e) {
+      console.error(e)
+      Swal.fire('Oops...', 'Initial info couldn\'t be found', 'error') 
+    }
+  }
+
+  if(!init.length)
+    initialState()
 
   const [info, setInfo] = useState([])
-  const poupup = (item) => {
-    setInfo(item)
-    console.log(item)
+  
+  const poupup = (id) => {
+    let filter = list.filter(item => item.id === id)
+    setInfo(filter[0])
   }
+
   const closePoupup = () => {
     setInfo([])
   }
+
+  const removeItemList = (id) => {
+    const newList =  list.filter(item => item.id !== id)
+    setList(newList)
+  }
+
   const addNewProfile = (profile) => {
-      if(!profile.name){
-        Swal.fire('Oops...', 'It seems '+profile.login+' doesn\'t have public info', 'error')
-      }else{
-        setList(prevState => [profile,...prevState])
-      }
+    if(!profile.name){
+      Swal.fire('Oops...', 'It seems '+profile.login+' doesn\'t have public info', 'error')
+    }else{
+      setList(prevState => {
+        const exists = prevState.filter(item => item.id === profile.id)
+        if(exists.length){
+          Swal.fire('Oops!','User already in your list','info')
+          return  prevState 
+        }
+        return [profile,...prevState]
+      })
+    }
   }
 
   return (
     <div className="App">
       <Nav onSubmit={addNewProfile}/>
-      <List profile={list} poupup={poupup}/>
+      <List profile={list} poupup={poupup} remove={removeItemList}/>
       <Poupup info={info} close={closePoupup} />
     </div>
   );
